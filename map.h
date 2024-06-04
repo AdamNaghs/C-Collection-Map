@@ -135,6 +135,9 @@ size_t map_count_collisions(const Map *map);
  * @return void
  *
  * @details This function will create a new map of the correct size, and add all elements from the old map to the new map. Then it will free the old map and set the pointer to the new map.
+ *
+ * @note If the load factor is above 0.75 after optimzing, the hash function may not be suitable for the data.
+ * 
  */
 void map_optimize(Map **map);
 
