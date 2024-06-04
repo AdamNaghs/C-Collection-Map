@@ -175,21 +175,21 @@ void dyn_test()
         }
     }
 
-    MAP_FOR_EACH(map, char*, key, int, value)
+    MAP_FOR_EACH(map, char *, key, int, value)
     {
         printf("Key: %s, Value: %d\n", *key, *value);
     }
 
-    char** key;
-    int* value;
-    MapNode* node;
+    char **key;
+    int *value;
+    MapNode *node;
     size_t i;
-    MAP_FOR_EACH_ANSI(map, i, node, char*, key, int, value)
+    MAP_FOR_EACH_ANSI(map, i, node, char *, key, int, value)
     {
         printf("Key: %s, Value: %d\n", *key, *value);
     }
 
-    MAP_FOR_EACH(map, char*, key, int, value)
+    MAP_FOR_EACH(map, char *, key, int, value)
     {
         map_remove(map, key);
     }
@@ -202,6 +202,5 @@ int main(void)
     test0();
     test_map();
     dyn_test();
-
     return 0;
 }

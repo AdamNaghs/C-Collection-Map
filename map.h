@@ -88,6 +88,7 @@ extern "C"
         for (MapNode *__map_node = &map->buckets[__idx]; __map_node != NULL; __map_node = __map_node->next) \
             for (key_type *key = (key_type *)__map_node->key; key != NULL; key = NULL)                      \
                 for (value_type *value = (value_type *)__map_node->value; value != NULL; value = NULL)
+                
 /**
  * @brief Example:
  * char** key;
