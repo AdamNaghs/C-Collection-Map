@@ -1,6 +1,11 @@
 #ifndef _MAP_H
 #define _MAP_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 
 /**
@@ -40,7 +45,6 @@ typedef struct
     MapNode *buckets;
 } Map;
 
-#define STR_MAP_TYPE MAP_TYPE(char *, char *, map_default_hash_str, map_default_cmp_str, NULL, NULL)
 
 #define MAP_DEFAULT_BUCKETS_COUNT 16
 
@@ -54,6 +58,8 @@ typedef struct
         .key_free = _key_free,                                                        \
         .value_free = _value_free                                                     \
     }
+
+#define STR_MAP_TYPE MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, NULL, NULL)
 
 #define MAP(key_type, value_type)                                   \
     map_new(MAP_TYPE(key_type, value_type, NULL, NULL, NULL, NULL), \
@@ -193,13 +199,8 @@ int map_default_cmp_str(const void *a, const void *b);
             for (key = (key_type *) map_node_ptr->key; key != NULL; key = NULL)                      \
                 for (value = (value_type *) map_node_ptr->value; value != NULL; value = NULL)
 
-
-#ifdef MAP_IMPLEMENTATION
-
-/*
-    Paste when finished
-*/
-
+#ifdef __cplusplus
+} /* Extern "C" */
 #endif
 
 #endif /* _MAP_H */
