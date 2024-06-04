@@ -76,7 +76,7 @@ extern "C"
  * @warning User is responsible for casting the key and value pointers to the correct type.
  *
  * @details Example: (char*, int)
- *    MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, free, NULL);
+ *    MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, map_deref_free, NULL);
  *    Map *map = map_new(type, 10);
  *  MAP_FOR_EACH(map, char*, key, int, value)
  *  {
@@ -200,6 +200,8 @@ extern "C"
      * @warning Uses strcmp.
      */
     int map_default_cmp_str(const void *a, const void *b);
+
+    void map_deref_free(void *ptr);
 
 #ifdef __cplusplus
 } /* Extern "C" */

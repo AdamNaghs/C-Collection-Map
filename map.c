@@ -12,8 +12,13 @@ static int map_default_cmp(const void *key1, const void *key2)
     return *(int *)key1 - *(int *)key2;
 }
 
-/* doesnt free anything because it is just a placeholder. 
-    A function that freed something would have to cast the void* to the correct type and free the value it points to. 
+void map_deref_free(void *ptr)
+{
+    free(*(void **)ptr);
+}
+
+/* doesnt free anything because it is just a placeholder.
+    A function that freed something would have to cast the void* to the correct type and free the value it points to.
 
     Example:
     void bigint_map_free(void *key)
@@ -24,7 +29,7 @@ static int map_default_cmp(const void *key1, const void *key2)
 */
 static void map_default_free(void *ptr)
 {
-    return; 
+    return;
 }
 
 Map *map_new(MapTypeData type, size_t buckets_count)
@@ -111,8 +116,8 @@ int map_add(Map *map, const void *key, const void *value)
             return -1;
         }
 
-        memcpy(node->key, key, map->type.key_size);       
-        memcpy(node->value, value, map->type.value_size); 
+        memcpy(node->key, key, map->type.key_size);
+        memcpy(node->value, value, map->type.value_size);
 
         map->length++;
         return 0;
@@ -150,8 +155,8 @@ int map_add(Map *map, const void *key, const void *value)
         return -1;
     }
 
-    memcpy(new_node->key, key, map->type.key_size);       
-    memcpy(new_node->value, value, map->type.value_size); 
+    memcpy(new_node->key, key, map->type.key_size);
+    memcpy(new_node->value, value, map->type.value_size);
     new_node->next = NULL;
 
     node->next = new_node;
@@ -161,7 +166,7 @@ int map_add(Map *map, const void *key, const void *value)
 
 void *map_get(Map *map, const void *key)
 {
-    size_t hash = map->type.key_hash(key); 
+    size_t hash = map->type.key_hash(key);
     size_t index = hash % map->buckets_count;
 
     MapNode *node = &map->buckets[index];
@@ -171,7 +176,7 @@ void *map_get(Map *map, const void *key)
         {
             return NULL;
         }
-        int cmp = map->type.key_cmp(node->key, key); 
+        int cmp = map->type.key_cmp(node->key, key);
         if (cmp == 0)
         {
             return node->value;
@@ -199,8 +204,11 @@ void map_remove(Map *map, const void *key)
         {
             if (prev == NULL)
             {
+                if (node->next != NULL)
+                {
                 /* promote next to a bucket */
                 map->buckets[index] = *node->next;
+                }
             }
             else
             {

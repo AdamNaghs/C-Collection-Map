@@ -148,7 +148,7 @@ void test_map()
 
 void dyn_test()
 {
-    MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, free, NULL);
+    MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, map_deref_free, NULL);
 
     Map *map = map_new(type, 10);
     for (int i = 0; i < 10; i++)
@@ -187,6 +187,11 @@ void dyn_test()
     MAP_FOR_EACH_ANSI(map, i, node, char*, key, int, value)
     {
         printf("Key: %s, Value: %d\n", *key, *value);
+    }
+
+    MAP_FOR_EACH(map, char*, key, int, value)
+    {
+        map_remove(map, key);
     }
 
     map_free(map);
