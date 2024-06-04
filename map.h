@@ -169,7 +169,7 @@ int map_default_cmp_str(const void *a, const void *b);
 /**
  * @brief Proivdes the key and value as pointers to the correct type. The key and value are only valid inside of the loop. Not ANSI C, but a useful macro for iterating over the map.  
  *
- * @warning User is responsible for casting the key and value to the correct type.
+ * @warning User is responsible for casting the key and value pointers to the correct type.
  *
  * @details Example: (char*, int)
  *    MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, free, NULL);
