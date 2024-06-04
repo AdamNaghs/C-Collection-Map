@@ -43,17 +43,7 @@ int int_cmp(const void *a, const void *b)
     return *(int *)a - *(int *)b;
 }
 
-void int_free(void *key)
-{
-    // Free the value pointed to by the key
-    // In this case, we assume the key is an int, so no action is needed
-}
 
-void value_free(void *value)
-{
-    // Free the value pointed to by the value
-    // In this case, we assume the value is an int, so no action is needed
-}
 
 void test_map()
 {
@@ -62,8 +52,8 @@ void test_map()
     type.value_size = sizeof(int);
     type.key_hash = int_hash;
     type.key_cmp = int_cmp;
-    type.key_free = int_free;
-    type.value_free = value_free;
+    type.key_free = NULL;
+    type.value_free = NULL;
 
     Map *map = map_new(type, MAP_DEFAULT_BUCKETS_COUNT);
     if (map == NULL)
