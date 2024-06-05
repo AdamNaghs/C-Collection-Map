@@ -122,6 +122,11 @@ extern "C"
      */
     Map *map_new(MapTypeData type, size_t buckets_count);
 
+    /**
+     * @brief Free the map.
+     * 
+     * @param map 
+     */
     void map_free(Map *map);
 
     /**
