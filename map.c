@@ -14,7 +14,10 @@ static int map_default_cmp(const void *key1, const void *key2)
 
 void map_deref_free(void *ptr)
 {
-    free(*(void **)ptr);
+    if (ptr != NULL && *(void **)ptr != NULL)
+    {
+        free(*(void **)ptr);
+    }
 }
 
 /* doesnt free anything because it is just a placeholder.
@@ -74,21 +77,23 @@ void map_free(Map *map)
     size_t i;
     for (i = 0; i < map->buckets_count; i++)
     {
-        MapNode *node = map->buckets[i].next;
+        int c = 0;
+        MapNode *node = &map->buckets[i];
         while (node != NULL)
         {
             MapNode *next = node->next;
-            if (map->type.key_free != NULL)
+            if (map->type.key_free)
                 map->type.key_free(node->key);
-            if (map->type.value_free != NULL)
+            if (map->type.value_free)
                 map->type.value_free(node->value);
             free(node->key);
             free(node->value);
-            free(node);
+            if (c++ > 0)
+                free(node);
             node = next;
+            map->length--;
         }
     }
-
     free(map->buckets);
     free(map);
 }
@@ -128,6 +133,7 @@ int map_add(Map *map, const void *key, const void *value)
         if (map->type.key_cmp(node->key, key) == 0)
         {
             /* Key already contained, update value */
+            map->type.value_free(node->value);
             memcpy(node->value, value, map->type.value_size);
             return 1;
         }
@@ -187,7 +193,7 @@ void *map_get(Map *map, const void *key)
     return NULL;
 }
 
-void map_remove(Map *map, const void *key)
+int map_remove(Map *map, const void *key)
 {
     size_t hash = map->type.key_hash(key);
     size_t index = hash % map->buckets_count;
@@ -196,43 +202,40 @@ void map_remove(Map *map, const void *key)
     MapNode *prev = NULL;
     while (node != NULL)
     {
-        if (node->key == NULL && node->value == NULL)
+        if (node->key && (map->type.key_cmp(node->key, key) == 0))
         {
-            return;
-        }
-        if (map->type.key_cmp(node->key, key) == 0)
-        {
-            if (prev == NULL)
-            {
-                if (node->next != NULL)
-                {
-                /* promote next to a bucket */
-                map->buckets[index] = *node->next;
-                }
-            }
-            else
-            {
-                /* Remove node from linked list */
-                prev->next = node->next;
-            }
+            /* Found key, remove node. */
             map->type.key_free(node->key);
             map->type.value_free(node->value);
             free(node->key);
             free(node->value);
-            node->key = NULL;
-            node->value = NULL;
-            if (prev)
-            {
-                /* Free node if its not a bucket */
-                free(node);
-                node = NULL;
-            }
+            if (prev != NULL)
+			{
+                /* This node is not a bucket so free it. */
+				prev->next = node->next;
+				free(node);
+			}
+			else
+			{
+                /* This node is a bucket so don't free the node. */
+				node->key = NULL;
+				node->value = NULL;
+                /* Promote the next node to the bucket */
+                MapNode *next = node->next;
+                if (next != NULL)
+				{
+                    /* There is a next node so promote it and free the heap data. */
+					*node = *next;
+					free(next);
+				}
+			}
             map->length--;
-            return;
+            return 0;
         }
         prev = node;
         node = node->next;
     }
+    return -1;
 }
 
 double map_load_factor(const Map *map)
@@ -267,7 +270,7 @@ void map_optimize(Map **inp)
 
     for (i = 0; i < map->buckets_count; i++)
     {
-        MapNode *node = map->buckets[i].next;
+        MapNode *node = &map->buckets[i];
         while (node != NULL)
         {
             map_add(new_map, node->key, node->value);

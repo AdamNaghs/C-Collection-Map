@@ -71,24 +71,31 @@ extern "C"
 #define MAP_T(type) map_new(type, MAP_DEFAULT_BUCKETS_COUNT)
 
 /**
+ * @brief Will crash if the value is NULL.
+ * 
+ */
+#define MAP_UNWRAP_VALUE(type, value) (*((type *)value))
+
+/**
  * @brief Proivdes the key and value as pointers to the correct type. The key and value are only valid inside of the loop. Not ANSI C, but a useful macro for iterating over the map.
  *
  * @warning User is responsible for casting the key and value pointers to the correct type.
  *
- * @details Example: (char*, int)
- *    MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, map_deref_free, NULL);
- *    Map *map = map_new(type, 10);
+ * @details Example: 
+ * (char*, int)
+ *  MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, map_deref_free, NULL);
+ *  Map *map = map_new(type, 10);
  *  MAP_FOR_EACH(map, char*, key, int, value)
  *  {
  *      printf("Key: %s, Value: %d\n", *key, *value);
  *  }
  */
 #define MAP_FOR_EACH(map, key_type, key, value_type, value)                                                 \
-    for (size_t __idx = 0; __idx < map->buckets_count; __idx++)                                             \
+    for (size_t __idx = 0; map && (__idx < map->buckets_count); __idx++)                                             \
         for (MapNode *__map_node = &map->buckets[__idx]; __map_node != NULL; __map_node = __map_node->next) \
             for (key_type *key = (key_type *)__map_node->key; key != NULL; key = NULL)                      \
                 for (value_type *value = (value_type *)__map_node->value; value != NULL; value = NULL)
-                
+
 /**
  * @brief Example:
  * char** key;
@@ -102,7 +109,7 @@ extern "C"
  *
  */
 #define MAP_FOR_EACH_ANSI(map, __idx, map_node_ptr, key_type, key, value_type, value)                      \
-    for (__idx = 0; __idx < map->buckets_count; __idx++)                                                   \
+    for (__idx = 0; map && (__idx < map->buckets_count); __idx++)                                                   \
         for (map_node_ptr = &map->buckets[__idx]; map_node_ptr != NULL; map_node_ptr = map_node_ptr->next) \
             for (key = (key_type *)map_node_ptr->key; key != NULL; key = NULL)                             \
                 for (value = (value_type *)map_node_ptr->value; value != NULL; value = NULL)

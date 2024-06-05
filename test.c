@@ -43,8 +43,6 @@ int int_cmp(const void *a, const void *b)
     return *(int *)a - *(int *)b;
 }
 
-
-
 void test_map()
 {
     MapTypeData type;
@@ -94,6 +92,7 @@ void test_map()
         printf("Failed to update key %d\n", key);
     }
 
+    
     // Test removing elements
     for (int i = 0; i < 100; i++)
     {
@@ -105,6 +104,7 @@ void test_map()
             printf("Failed to remove key %d\n", i);
         }
     }
+    
 
     // Test map load factor and resizing
     for (int i = 0; i < 1000; i++)
@@ -119,11 +119,11 @@ void test_map()
     {
         printf("Load factor too high: %f\n", load_factor);
     }
-
+    
     // Test collision counting
     size_t collisions = map_count_collisions(map);
     printf("Number of collisions: %zu\n", collisions);
-
+    Map old_map = *map;
     clock_t start = clock();
     map_optimize(&map);
     clock_t end = clock();
@@ -133,6 +133,7 @@ void test_map()
     collisions = map_count_collisions(map);
     printf("Number of collisions after optimization: %zu\n", collisions);
     printf("Optimization time: %f seconds\n", ((double)(end - start)) / CLOCKS_PER_SEC);
+    
     map_free(map);
 }
 
@@ -185,10 +186,12 @@ void dyn_test()
     }
 
     map_free(map);
+
 }
 
 int main(void)
 {
+    printf("Running tests...\n");
     test0();
     test_map();
     dyn_test();
