@@ -3,35 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-int test0()
-{
-    MapTypeData type = {
-        .key_size = sizeof(char *),
-        .value_size = sizeof(int),
-        .key_hash = NULL,
-        .key_cmp = map_default_cmp_str,
-        .key_free = NULL,
-        .value_free = NULL};
-
-    Map *map = map_new(type, MAP_DEFAULT_BUCKETS_COUNT);
-    if (map == NULL)
-    {
-        return -1;
-    }
-
-    char *key = "key";
-    int value = 42;
-    map_add(map, &key, &value);
-
-    int *result = map_get(map, &key);
-    printf("Test0 result: %d\n\t", *result);
-    printf("%s\n", *result == 42 ? "Success" : "Failure");
-
-    map_free(map);
-
-    return 0;
-}
+#include "../Testing/testing.h"
 
 size_t int_hash(const void *key)
 {
@@ -43,22 +15,11 @@ int int_cmp(const void *a, const void *b)
     return *(int *)a - *(int *)b;
 }
 
-void test_map()
+TEST_MAKE(Map_Local_Value)
 {
-    MapTypeData type;
-    type.key_size = sizeof(int);
-    type.value_size = sizeof(int);
-    type.key_hash = int_hash;
-    type.key_cmp = int_cmp;
-    type.key_free = NULL;
-    type.value_free = NULL;
-
-    Map *map = map_new(type, MAP_DEFAULT_BUCKETS_COUNT);
-    if (map == NULL)
-    {
-        printf("Failed to create map\n");
-        return;
-    }
+    MapTypeData type = MAP_TYPE(int, int, int_hash, int_cmp, NULL, NULL);
+    Map *map = map_new(type, 10);
+    TEST_ASSERT_MSG(map != NULL, "Failed to create map");
 
     // Test adding and retrieving elements
     for (int i = 0; i < 100; i++)
@@ -66,20 +27,14 @@ void test_map()
         int key = i;
         int value = i * 10;
         int result = map_add(map, &key, &value);
-        if (result != 0)
-        {
-            printf("Failed to add key %d\n", i);
-        }
+        TEST_ASSERT_MSG(result == 0, "Failed to add key");
     }
 
     for (int i = 0; i < 100; i++)
     {
         int key = i;
         int *value = (int *)map_get(map, &key);
-        if (value == NULL || *value != i * 10)
-        {
-            printf("Failed to retrieve key %d\n", i);
-        }
+        TEST_ASSERT_MSG(value != NULL, "Failed to retrieve key");
     }
 
     // Test updating an existing key
@@ -87,59 +42,43 @@ void test_map()
     int new_value = 500;
     map_add(map, &key, &new_value);
     int *value = (int *)map_get(map, &key);
-    if (value == NULL || *value != 500)
-    {
-        printf("Failed to update key %d\n", key);
-    }
+    TEST_ASSERT_MSG(value, "Failed to retrieve key");
+    TEST_ASSERT_MSG(*value == new_value, "Failed to update key");
 
-    
     // Test removing elements
     for (int i = 0; i < 100; i++)
     {
         int key = i;
         map_remove(map, &key);
         int *value = (int *)map_get(map, &key);
-        if (value != NULL)
-        {
-            printf("Failed to remove key %d\n", i);
-        }
+        TEST_ASSERT_MSG(value == NULL, "Failed to remove key");
     }
-    
 
     // Test map load factor and resizing
     for (int i = 0; i < 1000; i++)
     {
         int key = i;
         int value = i * 10;
-        map_add(map, &key, &value);
+        int ret = map_add(map, &key, &value);
+        TEST_ASSERT_MSG(ret == 0, "Failed to add key");
     }
 
     double load_factor = map_load_factor(map);
-    if (load_factor > 0.75)
-    {
-        printf("Load factor too high: %f\n", load_factor);
-    }
-    
+
     // Test collision counting
     size_t collisions = map_count_collisions(map);
-    printf("Number of collisions: %zu\n", collisions);
-    Map old_map = *map;
-    clock_t start = clock();
     map_optimize(&map);
-    clock_t end = clock();
-    load_factor = map_load_factor(map);
+    TEST_ASSERT_MSG(map != NULL, "Failed to optimize map");
+    TEST_ASSERT_MSG(map_load_factor(map) < load_factor, "Failed to optimize map");
+    TEST_ASSERT_MSG(map_count_collisions(map) <= collisions, "Failed to optimize map, too many collisions");
 
-    printf("Load factor after optimization: %f\n", load_factor);
-    collisions = map_count_collisions(map);
-    printf("Number of collisions after optimization: %zu\n", collisions);
-    printf("Optimization time: %f seconds\n", ((double)(end - start)) / CLOCKS_PER_SEC);
-    
     map_free(map);
+    TEST_PASS();
 }
 
-void dyn_test()
+TEST_MAKE(Heap_Str)
 {
-    MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, map_deref_free, NULL);
+    MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, map_default_free_str, NULL);
 
     Map *map = map_new(type, 10);
     for (int i = 0; i < 10; i++)
@@ -147,53 +86,25 @@ void dyn_test()
         char *key = malloc(10);
         sprintf(key, "key%d", i);
         int value = i;
-        map_add(map, &key, &value); // Pass the address of the key and value
+        int ret = map_add(map, &key, &value);
+        TEST_ASSERT_CLEAN_FMT(ret == 0, map_free(map), "Failed to add key, ret: %d", i);
+        int *result = (int *)map_get(map, &key);
+        TEST_ASSERT_CLEAN_FMT(result != NULL, map_free(map), "Failed to retrieve key %s", key);
+        TEST_ASSERT_CLEAN_FMT(*result == i, map_free(map), "Failed to retrieve key %s with value %d", key, *result);
     }
-
-    for (int i = 0; i < 10; i++)
-    {
-        char key[10];
-        sprintf(key, "key%d", i);
-        char *key_ptr = key;
-        int *result = (int *)map_get(map, &key_ptr); // Pass the address of the key pointer
-        if (result == NULL || *result != i)
-        {
-            printf("Failed to retrieve key %s\n", key);
-        }
-        else
-        {
-            printf("Retrieved key %s with value %d\n", key, *result);
-        }
-    }
-
-    MAP_FOR_EACH(map, char *, key, int, value)
-    {
-        printf("Key: %s, Value: %d\n", *key, *value);
-    }
-
-    char **key;
-    int *value;
-    MapNode *node;
-    size_t i;
-    MAP_FOR_EACH_ANSI(map, i, node, char *, key, int, value)
-    {
-        printf("Key: %s, Value: %d\n", *key, *value);
-    }
-
-    MAP_FOR_EACH(map, char *, key, int, value)
-    {
-        map_remove(map, key);
-    }
-
     map_free(map);
+    TEST_PASS();
+}
 
+TEST_SUITE_MAKE(Map)
+{
+    TEST_SUITE_LINK(Map, Heap_Str);
+    TEST_SUITE_LINK(Map, Map_Local_Value);
+    TEST_SUITE_END(Map);
 }
 
 int main(void)
 {
-    printf("Running tests...\n");
-    test0();
-    test_map();
-    dyn_test();
+    TEST_SUITE_RUN(Map);
     return 0;
 }
