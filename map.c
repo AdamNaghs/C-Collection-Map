@@ -2,14 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-static size_t map_default_hash(const void *key)
+size_t map_default_hash(const void *key)
 {
     return *(size_t *)key;
 }
 
-static int map_default_cmp(const void *key1, const void *key2)
+int map_default_cmp(const void *key1, const void *key2)
 {
-    return *(int *)key1 - *(int *)key2;
+    if (key1 < key2)
+        return -1;
+    else if (key1 > key2)
+        return 1;
+    else
+        return 0;
 }
 
 void map_deref_free(void *ptr)
@@ -30,7 +35,7 @@ void map_deref_free(void *ptr)
         bigint_free(*bi);
     }
 */
-static void map_default_free(void *ptr)
+void map_default_free(void *ptr)
 {
     return;
 }
