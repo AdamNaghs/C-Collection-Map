@@ -60,19 +60,21 @@ extern "C"
 
 #define STR_MAP_TYPE MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, NULL, NULL)
 
-#define MAP(key_type, value_type)                                   \
-    map_new(MAP_TYPE(key_type, value_type, NULL, NULL, NULL, NULL), \
+#define MAP_TYPE_DEFAULT(key_type, value_type) MAP_TYPE(key_type, value_type, map_default_hash, map_default_cmp, map_default_free, map_default_free)
+
+#define MAP(key_type, value_type)                   \
+    map_new(MAP_TYPE_DEFAULT(key_type, value_type), \
             MAP_DEFAULT_BUCKETS_COUNT)
 
 #define MAP_N(key_type, value_type, bucket_count)                   \
-    map_new(MAP_TYPE(key_type, value_type, NULL, NULL, NULL, NULL), \
+    map_new(MAP_TYPE_DEFAULT(key_type, value_type), \
             bucket_count)
 
 #define MAP_T(type) map_new(type, MAP_DEFAULT_BUCKETS_COUNT)
 
 /**
  * @brief Will crash if the value is NULL.
- * 
+ *
  */
 #define MAP_UNWRAP_VALUE(type, value) (*((type *)value))
 
@@ -81,7 +83,7 @@ extern "C"
  *
  * @warning User is responsible for casting the key and value pointers to the correct type.
  *
- * @details Example: 
+ * @details Example:
  * (char*, int)
  *  MapTypeData type = MAP_TYPE(char *, int, map_default_hash_str, map_default_cmp_str, map_deref_free, NULL);
  *  Map *map = map_new(type, 10);
@@ -91,7 +93,7 @@ extern "C"
  *  }
  */
 #define MAP_FOR_EACH(map, key_type, key, value_type, value)                                                 \
-    for (size_t __idx = 0; map && (__idx < map->buckets_count); __idx++)                                             \
+    for (size_t __idx = 0; map && (__idx < map->buckets_count); __idx++)                                    \
         for (MapNode *__map_node = &map->buckets[__idx]; __map_node != NULL; __map_node = __map_node->next) \
             for (key_type *key = (key_type *)__map_node->key; key != NULL; key = NULL)                      \
                 for (value_type *value = (value_type *)__map_node->value; value != NULL; value = NULL)
@@ -109,7 +111,7 @@ extern "C"
  *
  */
 #define MAP_FOR_EACH_ANSI(map, __idx, map_node_ptr, key_type, key, value_type, value)                      \
-    for (__idx = 0; map && (__idx < map->buckets_count); __idx++)                                                   \
+    for (__idx = 0; map && (__idx < map->buckets_count); __idx++)                                          \
         for (map_node_ptr = &map->buckets[__idx]; map_node_ptr != NULL; map_node_ptr = map_node_ptr->next) \
             for (key = (key_type *)map_node_ptr->key; key != NULL; key = NULL)                             \
                 for (value = (value_type *)map_node_ptr->value; value != NULL; value = NULL)
@@ -124,8 +126,8 @@ extern "C"
 
     /**
      * @brief Free the map.
-     * 
-     * @param map 
+     *
+     * @param map
      */
     void map_free(Map *map);
 
@@ -153,12 +155,13 @@ extern "C"
      *
      * @param map
      * @param key Valid memory address to key.
+     * @return 0 on success, -1 on failure.
      *
      * @note If the key is not found, nothing happens.
      *
      * @details Calls the key_free and value_free functions if they are set.
      */
-    void map_remove(Map *map, const void *key);
+    int map_remove(Map *map, const void *key);
 
     /**
      * @brief Get the number of elements in the map.
@@ -190,7 +193,7 @@ extern "C"
     void map_optimize(Map **map);
 
     /**
-     * @brief Pass to TYPE to use the default hash function for strings.
+     * @brief Pass to MAP_TYPE to use the default hash function for strings.
      *
      * @param key
      * @return size_t
@@ -202,7 +205,7 @@ extern "C"
     size_t map_default_hash_str(const void *key);
 
     /**
-     * @brief Pass to TYPE to use the default compare function for strings.
+     * @brief Pass to MAP_TYPE to use the default compare function for strings.
      *
      * @param a
      * @param b
@@ -214,7 +217,48 @@ extern "C"
      */
     int map_default_cmp_str(const void *a, const void *b);
 
+    /**
+     * @brief Pass to MAP_TYPE to use the default free function for strings.
+     * 
+     * @param ptr 
+     * 
+     * @note Suiteable for keys or values allocated with malloc.
+     * 
+     * @details Derefrences the pointer and frees the memory.
+     */
     void map_deref_free(void *ptr);
+
+#define map_default_free_str map_deref_free
+
+    /**
+     * @brief Pass to MAP_TYPE to use the default hash function.
+     *
+     * @param key
+     * @return size_t
+     *
+     * @details Uses the pointer value as the hash.
+     */
+    size_t map_default_hash(const void *key);
+
+    /**
+     * @brief Pass to MAP_TYPE to use the default compare function.
+     *
+     * @param key1
+     * @param key2
+     * @return int
+     *
+     * @details Compares the pointers as size_t.
+     */
+    int map_default_cmp(const void *key1, const void *key2);
+
+    /**
+     * @brief Pass to MAP_TYPE to use the default free function.
+     *
+     * @param ptr
+     *
+     * @details Does nothing. Suitable for values that do not need to be freed.
+     */
+    void map_default_free(void *ptr);
 
 #ifdef __cplusplus
 } /* Extern "C" */
