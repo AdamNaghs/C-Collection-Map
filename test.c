@@ -96,10 +96,35 @@ TEST_MAKE(Heap_Str)
     TEST_PASS();
 }
 
+size_t int_ptr_hash(const void *key)
+{
+    return *(int *)key;
+}
+
+TEST_MAKE(Heap_Int)
+{
+    MapTypeData type = MAP_TYPE(int*, int, int_ptr_hash, int_cmp, map_deref_free, NULL);
+    Map *map = map_new(type, 10);
+    for (int i = 0; i < 10; i++)
+    {
+        int* key = malloc(sizeof(int));
+        *key = i;
+        int value = i * 10;
+        int ret = map_add(map, &key, &value);
+        TEST_ASSERT_CLEAN_FMT(ret == 0, map_free(map), "Failed to add key, ret: %d", i);
+        int *result = (int *)map_get(map, &key);
+        TEST_ASSERT_CLEAN_FMT(result != NULL, map_free(map), "Failed to retrieve key %d", key);
+        TEST_ASSERT_CLEAN_FMT(*result == (i * 10), map_free(map), "Failed to retrieve key %d with value %d", *key, *result);
+    }
+    map_free(map);
+    TEST_PASS();
+}
+
 TEST_SUITE_MAKE(Map)
 {
     TEST_SUITE_LINK(Map, Heap_Str);
     TEST_SUITE_LINK(Map, Map_Local_Value);
+    TEST_SUITE_LINK(Map, Heap_Int);
     TEST_SUITE_END(Map);
 }
 
