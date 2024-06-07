@@ -104,8 +104,9 @@ size_t int_ptr_hash(const void *key)
 TEST_MAKE(Heap_Int)
 {
     MapTypeData type = MAP_TYPE(int*, int, int_ptr_hash, int_cmp, map_deref_free, NULL);
-    Map *map = map_new(type, 10);
-    for (int i = 0; i < 10; i++)
+    Map *map = map_new(type, 1000);
+    const int max = 100000;
+    for (int i = 0; i < max; i++)
     {
         int* key = malloc(sizeof(int));
         *key = i;
@@ -114,8 +115,12 @@ TEST_MAKE(Heap_Int)
         TEST_ASSERT_CLEAN_FMT(ret == 0, map_free(map), "Failed to add key, ret: %d", i);
         int *result = (int *)map_get(map, &key);
         TEST_ASSERT_CLEAN_FMT(result != NULL, map_free(map), "Failed to retrieve key %d", key);
-        TEST_ASSERT_CLEAN_FMT(*result == (i * 10), map_free(map), "Failed to retrieve key %d with value %d", *key, *result);
+        TEST_ASSERT_CLEAN_FMT(*result == value, map_free(map), "Failed to retrieve key %d with value %d", *key, *result);
     }
+    size_t col = map_count_collisions(map);
+    map_optimize(&map);
+    TEST_ASSERT_CLEAN_MSG(map != NULL, map_free(map), "Map optimze returned NULL");
+    TEST_ASSERT_CLEAN_MSG(map_count_collisions(map) <= col, map_free(map), "Failed to optimize map, too many collisions");
     map_free(map);
     TEST_PASS();
 }
