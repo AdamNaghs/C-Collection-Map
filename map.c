@@ -4,9 +4,11 @@
 
 size_t map_default_hash(const void *key)
 {
-    return *(size_t *)key;
+    return (size_t )key;
 }
 
+
+#ifndef FIRST_BYTE_CMP
 int map_default_cmp(const void *key1, const void *key2)
 {
     if (key1 < key2)
@@ -16,6 +18,12 @@ int map_default_cmp(const void *key1, const void *key2)
     else
         return 0;
 }
+#else
+int map_default_cmp(const void *key1, const void *key2)
+{
+    return *(byte *)key1 - *(byte *)key2;
+}
+#endif
 
 void map_deref_free(void *ptr)
 {
@@ -276,6 +284,10 @@ void map_optimize(Map **inp)
     for (i = 0; i < map->buckets_count; i++)
     {
         MapNode *node = &map->buckets[i];
+        if (node->key == NULL && node->value == NULL)
+        {
+            continue;
+        }
         while (node != NULL)
         {
             map_add(new_map, node->key, node->value);
