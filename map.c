@@ -323,3 +323,27 @@ int map_default_cmp_str(const void *a, const void *b)
 {
     return strcmp(*(char **)a, *(char **)b);
 }
+
+void map_clear(Map *map)
+{
+    size_t i;
+    for (i = 0; i < map->buckets_count; i++)
+    {
+        int c = 0;
+        MapNode *node = &map->buckets[i];
+        while (node != NULL)
+        {
+            MapNode *next = node->next;
+            if (map->type.key_free)
+                map->type.key_free(node->key);
+            if (map->type.value_free)
+                map->type.value_free(node->value);
+            free(node->key);
+            free(node->value);
+            if (c++ > 0)
+                free(node);
+            node = next;
+            map->length--;
+        }
+    }
+}

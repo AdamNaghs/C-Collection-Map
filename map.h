@@ -260,6 +260,13 @@ extern "C"
      */
     void map_default_free(void *ptr);
 
+    /**
+     * @brief Remove all elements from the map without freeing the underlying buckets.
+     * 
+     * @param map 
+     */
+    void map_clear(Map *map);
+
 #ifdef __cplusplus
 } /* Extern "C" */
 #endif
