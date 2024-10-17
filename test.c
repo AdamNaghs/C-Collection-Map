@@ -118,7 +118,7 @@ TEST_MAKE(Heap_Int)
         int ret = map_add(map, &key, &value);
         TEST_ASSERT_CLEAN_LOG(ret == 0, map_free(map), "Failed to add key, ret: %d", i);
         int *result = (int *)map_get(map, &key);
-        TEST_ASSERT_CLEAN_LOG(result != NULL, map_free(map), "Failed to retrieve key %d", key);
+        TEST_ASSERT_CLEAN_LOG(result != NULL, map_free(map), "Failed to retrieve key %d", *key);
         TEST_ASSERT_CLEAN_LOG(*result == value, map_free(map), "Failed to retrieve key %d with value %d", *key, *result);
     }
     size_t col = map_count_collisions(map), new_col;
