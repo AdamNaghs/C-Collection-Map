@@ -7,6 +7,7 @@ extern "C"
 #endif
 
 #include <stdint.h>
+#include <stddef.h>
 
     /**
      * @brief When using key_free and value_free, the user should not free the void* they are given.
